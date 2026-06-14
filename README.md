@@ -33,15 +33,16 @@ Este proyecto fue desarrollado con fines educativos para aplicar conceptos de pr
 ## 🔧 Componentes Utilizados
 
 - Arduino Uno
-- Servomotor 
-- Teclado 4x4
+- Servomotor(SG90)
+- Resistencias de 220 Ohms 
+- Teclado 4x4(Pin Pad)
 - Protoboard
-- Cables 
-- Fuente de alimentación
-- led's rojo y verde
-- sensor de proximidad
-- pantalla led 
-
+- Cables jumper(Macho-Macho y Macho-Hembra)
+- Fuente de alimentación USB
+- led rojo y led verde
+- sensor ultrasonico de distancia(HC-SR04)
+- pantalla oled I2C 128x32(SSD1306)
+- 
 ---
 ## 💻 Tecnologías Utilizadas
 
