@@ -1,0 +1,212 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Keypad.h>
+#include <Servo.h>
+#include <EEPROM.h>
+
+#define PantallaAncho 128
+#define PantallaAlto 64
+#define OledReset    -1
+#define DireccionPantalla 0x3C
+
+Adafruit_SSD1306 display(PantallaAncho, PantallaAlto, &Wire, OledReset);
+
+// --- Configuración Hardware ---
+const int pinTrig = 13;
+const int pinEcho = A2;
+const int pinServo = 12;
+
+char teclas[4][4] = {{'1','2','3','A'},{'4','5','6','B'},{'7','8','9','C'},{'*','0','#','D'}};
+byte pinesFilas[4] = {11, 10, 9, 8}; 
+byte pinesColumnas[4] = {7, 6, 5, 4}; 
+Keypad teclado = Keypad(makeKeymap(teclas), pinesFilas, pinesColumnas, 4, 4);
+
+Servo miServo;
+
+// --- Variables de Control ---
+String Patentes[3] = {"AA111AA", "BB222BB", "CC333CC"};
+String PatentesIngresadas = "";
+int contadorAutos = 0;
+const int MaximoAutos = 5;
+long Duracion;
+int Distancia;
+
+enum EstadosSemaforo { ESTADO_SIN_AUTO, ESTADO_ESPERE, ESTADO_AVANCE, ESTADO_RECHAZADO, ESTADO_EMERGENCIA };
+EstadosSemaforo estadoActual = ESTADO_SIN_AUTO;
+
+unsigned long tiempoReferencia = 0;
+bool flancoDetectado = false;
+bool estacionamientoLleno = false;
+
+// Variable global para forzar el redibujado de la interfaz
+bool forzarRefrescoInterfaz = true; 
+
+void setup() {
+  Serial.begin(115200);
+  miServo.attach(pinServo);
+  
+  delay(100); 
+  
+  if(!display.begin(SSD1306_SWITCHCAPVCC, DireccionPantalla)) {
+    Serial.println(F("Error: OLED no encontrada"));
+    for(;;); 
+  }
+  
+  EEPROM.get(0, contadorAutos);
+  if(contadorAutos < 0 || contadorAutos > MaximoAutos) contadorAutos = 0;
+
+  pinMode(A1, OUTPUT); pinMode(A0, OUTPUT);
+  pinMode(pinTrig, OUTPUT); pinMode(pinEcho, INPUT);
+  
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.println(F("HOLA"));
+  display.display();
+  delay(2000); 
+}
+
+void loop() {
+  digitalWrite(pinTrig, LOW); delayMicroseconds(2);
+  digitalWrite(pinTrig, HIGH); delayMicroseconds(10);
+  digitalWrite(pinTrig, LOW); 
+  Duracion = pulseIn(pinEcho, HIGH);
+  Distancia = Duracion * 0.0343 / 2; 
+
+  char tecla = teclado.getKey();
+
+  switch (estadoActual) {
+    case ESTADO_SIN_AUTO:
+      digitalWrite(A0, LOW); digitalWrite(A1, LOW); miServo.write(0);
+      PatentesIngresadas = ""; flancoDetectado = false;
+      estacionamientoLleno = false;
+      forzarRefrescoInterfaz = true; 
+      actualizarPantalla(F("SIN AUTOS"));
+      if (Distancia > 0 && Distancia <= 11) estadoActual = ESTADO_ESPERE;
+      break;
+
+    case ESTADO_ESPERE:
+      digitalWrite(A1, HIGH); digitalWrite(A0, LOW);
+      
+      if (PatentesIngresadas == "") {
+        mostrarEspereConContador();
+      } else {
+        actualizarPantalla(PatentesIngresadas);
+      }
+
+      if (tecla != '\0') {
+        if (tecla == '#') {
+          if (PatentesIngresadas == "911") {
+            estadoActual = ESTADO_EMERGENCIA;
+          } 
+          else if (PatentesIngresadas == Patentes[0] || PatentesIngresadas == Patentes[1] || PatentesIngresadas == Patentes[2]) {
+            if (contadorAutos >= MaximoAutos) {
+              tiempoReferencia = millis(); 
+              estacionamientoLleno = true;
+              estadoActual = ESTADO_RECHAZADO;
+            } else {
+              tiempoReferencia = millis(); 
+              estadoActual = ESTADO_AVANCE;
+            }
+          } else {
+            tiempoReferencia = millis(); estadoActual = ESTADO_RECHAZADO;
+          }
+        } else if (tecla != '*') {
+          PatentesIngresadas += tecla;
+        }
+      }
+      
+      if (Distancia > 11) estadoActual = ESTADO_SIN_AUTO;
+      break;
+
+    case ESTADO_AVANCE:
+      digitalWrite(A0, HIGH); digitalWrite(A1, LOW); miServo.write(90);
+      
+      if (!flancoDetectado) {
+        contadorAutos++;
+        EEPROM.put(0, contadorAutos); 
+        flancoDetectado = true; 
+      }
+
+      display.clearDisplay();
+      display.setTextSize(2);
+      display.setCursor(0, 0);
+      display.println(F("AVANCE"));
+      display.print(F("# ")); display.println(contadorAutos);
+      display.display();
+
+      if (millis() - tiempoReferencia >= 3000) {
+        PatentesIngresadas = ""; 
+        forzarRefrescoInterfaz = true; 
+        flancoDetectado = false; // <--- ACÁ ESTÁ LA MAGIA PARA DESTRABAR EL CERROJO
+        estadoActual = ESTADO_ESPERE;
+      }
+      break;
+
+    case ESTADO_RECHAZADO:
+      digitalWrite(A1, HIGH); miServo.write(0);
+      
+      display.clearDisplay();
+      display.setTextSize(2);
+      display.setCursor(0, 0);
+      if(estacionamientoLleno) display.println(F("LLENO"));
+      else display.println(F("RECHAZADO"));
+      display.display();
+
+      if (millis() - tiempoReferencia >= 2000) {
+        PatentesIngresadas = ""; 
+        estacionamientoLleno = false;
+        forzarRefrescoInterfaz = true; 
+        estadoActual = ESTADO_ESPERE;
+      }
+      break;
+
+    case ESTADO_EMERGENCIA:
+      digitalWrite(A0, HIGH); digitalWrite(A1, HIGH); miServo.write(90);
+      actualizarPantalla(F("EMERG."));
+      if (tecla == '#') { 
+        PatentesIngresadas = ""; 
+        forzarRefrescoInterfaz = true; 
+        estadoActual = ESTADO_ESPERE; 
+      }
+      break;
+  }
+}
+
+void actualizarPantalla(String mensaje) {
+  static String ultimoMensaje = "";
+  if (mensaje != ultimoMensaje || forzarRefrescoInterfaz) {
+    display.clearDisplay(); 
+    display.setTextSize(2);
+    display.setCursor(0, 0); 
+    display.println(mensaje); 
+    display.display();
+    ultimoMensaje = mensaje;
+  }
+}
+
+void mostrarEspereConContador() {
+  static int ultimoContador = -1;
+
+  if (forzarRefrescoInterfaz || contadorAutos != ultimoContador) {
+    display.clearDisplay();
+    
+    display.setTextSize(2);
+    display.setCursor(0, 0);
+    display.println(F("ESPERE"));
+
+    display.setTextSize(1);
+    display.setCursor(0, 50);
+    display.print(F("Autos: "));
+    display.print(contadorAutos);
+    display.print(F("/"));
+    display.print(MaximoAutos);
+    
+    display.display();
+    
+    ultimoContador = contadorAutos;
+    forzarRefrescoInterfaz = false; 
+  }
+}
