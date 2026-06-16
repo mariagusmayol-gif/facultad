@@ -76,3 +76,30 @@ Durante el desarrollo de este proyecto se aplicaron conocimientos de:
 -Juan Sarago
 -Angel Quizamas
 -Agustin Mayol
+
+---
+## Diagrama de Flujo
+
+```mermaid
+graph TD
+    %% Definición de Estados
+    SIN_AUTO[ESTADO_SIN_AUTO<br>Mostrar 'SIN AUTOS' / Barrera 0°]
+    ESPERE[ESTADO_ESPERE<br>Mostrar 'ESPERE' / Leer Teclado]
+    AVANCE[ESTADO_AVANCE<br>Luz Verde / Barrera 90°]
+    RECHAZADO[ESTADO_RECHAZADO<br>Luz Roja / Barrera 0°]
+    EMERGENCIA[ESTADO_EMERGENCIA<br>Luz Roja y Verde / Barrera 90°]
+    LIMPIEZA[LIMPIEZA Y REINICIO<br>Limpiar Patente / Barrera 0°]
+
+    %% Transiciones
+    SIN_AUTO -->|Auto detectado a <= 11cm| ESPERE
+    ESPERE -->|El auto se va / Distancia > 11cm| SIN_AUTO
+    
+    ESPERE -->|Presionar '#' con Patente Válida| AVANCE
+    ESPERE -->|Presionar '#' con Patente Inválida| RECHAZADO
+    ESPERE -->|Presionar '#' con Patente '911'| EMERGENCY
+
+    AVANCE -->|Pasan 3 segundos| LIMPIEZA
+    RECHAZADO -->|Pasan 2 segundos| LIMPIEZA
+    EMERGENCIA -->|Presionar '#' de nuevo| LIMPIEZA
+
+    LIMPIEZA --> ESPERE
