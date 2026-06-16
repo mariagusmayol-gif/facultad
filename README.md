@@ -15,7 +15,6 @@ Este proyecto fue desarrollado con fines educativos para aplicar conceptos de pr
 - Validar patentes registradas en el sistema.
 - Mejorar la seguridad del acceso vehicular.
 
----
 ## ⚙️ Funcionamiento
 
 1. El sistema recibe una patente.
@@ -30,7 +29,6 @@ Este proyecto fue desarrollado con fines educativos para aplicar conceptos de pr
    - Se deniega el acceso.
    - La barrera permanece cerrada.
 
----
 ## 🔧 Componentes Utilizados
 
 - Arduino Uno
@@ -44,13 +42,11 @@ Este proyecto fue desarrollado con fines educativos para aplicar conceptos de pr
 - sensor ultrasonico de distancia(HC-SR04)
 - pantalla oled I2C 128x32(SSD1306)
 
----
 ## 💻 Tecnologías Utilizadas
 
 - Arduino UNO
 - Lenguaje C
 
----
 ## 📔 Librerias Utilizadas
 
 -Wire.h
@@ -60,7 +56,6 @@ Este proyecto fue desarrollado con fines educativos para aplicar conceptos de pr
 -Servo.h
 -EEPROM.h
 
----
 ## 📚 Aprendizajes
 
 Durante el desarrollo de este proyecto se aplicaron conocimientos de:
@@ -71,14 +66,12 @@ Durante el desarrollo de este proyecto se aplicaron conocimientos de:
 - Automatización de procesos.
 - Diseño de sistemas pequeños.
 
----
 ## 👨‍💻 Autores
 -Juan Sarago
 -Angel Quizamas
 -Agustin Mayol
 
----
-## Diagrama de Flujo
+## 🔀 Diagrama de Flujo
 
 ```mermaid
 graph TD
