@@ -1,4 +1,4 @@
-# 🚗 Barrera Inteligente para Estacionamiento
+# 🚗 Barrera Inteligente para Estacionamiento y/o Peaje
 
 ## 📋 Descripción
 
