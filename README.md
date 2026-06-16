@@ -72,7 +72,6 @@ Durante el desarrollo de este proyecto se aplicaron conocimientos de:
 -Agustin Mayol
 
 ## 🔀 Diagrama de Flujo
-
 ```mermaid
 graph TD
     %% Definición de Estados
@@ -89,7 +88,7 @@ graph TD
     
     ESPERE -->|Presionar '#' con Patente Válida| AVANCE
     ESPERE -->|Presionar '#' con Patente Inválida| RECHAZADO
-    ESPERE -->|Presionar '#' con Patente '911'| EMERGENCY
+    ESPERE -->|Presionar '#' con Patente '911'| EMERGENCIA
 
     AVANCE -->|Pasan 3 segundos| LIMPIEZA
     RECHAZADO -->|Pasan 2 segundos| LIMPIEZA
