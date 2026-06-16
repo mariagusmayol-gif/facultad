@@ -4,7 +4,6 @@
 
 Este proyecto consiste en una barrera automática para el control de acceso a un estacionamiento utilizando Arduino.
 El sistema verifica si la patente de un vehículo se encuentra registrada en una base de datos. Si la patente es válida, la barrera se abre automáticamente mediante un servomotor, permitiendo el ingreso del vehículo. En caso contrario, el acceso es denegado.
-Este proyecto fue desarrollado con fines educativos para aplicar conceptos de programación, electrónica y automatización.
 
 ## 🎯 Objetivos
 
